@@ -27,6 +27,7 @@ rc = racecar_core.create_racecar()
 # >> Constants
 # The smallest contour we will recognize as a valid contour
 MIN_CONTOUR_AREA = 30
+PERPENDICULAR_CONTOUR_AREA = 5500
 
 # A crop window for the floor directly in front of the car
 CROP_FLOOR = ((360, 0), (rc.camera.get_height(), rc.camera.get_width()))
@@ -35,11 +36,19 @@ CROP_FLOOR = ((360, 0), (rc.camera.get_height(), rc.camera.get_width()))
 BLUE = ((90, 50, 50), (120, 255, 255))  # The HSV range for the color blue
 # TODO (challenge 1): add HSV ranges for other colors
 
+### Προσθήκη: Εύρη HSV για τα χρώματα που ζητούνται (Green, Red)
+GREEN = ((40, 50, 50), (80, 255, 255))
+RED = ((0, 50, 50), (10, 255, 255))
+color_priorities = [RED, GREEN, BLUE]
+### Προσθήκη
+
 # >> Variables
 speed = 0.0  # The current speed of the car
 angle = 0.0  # The current angle of the car's wheels
 contour_center = None  # The (pixel row, pixel column) of contour
 contour_area = 0  # The area of contour
+contour = None
+M = None
 
 ########################################################################################
 # Functions
@@ -53,6 +62,8 @@ def update_contour():
     """
     global contour_center
     global contour_area
+    global contour
+    global M
 
     image = rc.camera.get_color_image()
 
@@ -67,15 +78,27 @@ def update_contour():
         image = rc_utils.crop(image, CROP_FLOOR[0], CROP_FLOOR[1])
 
         # Find all of the blue contours
-        contours = rc_utils.find_contours(image, BLUE[0], BLUE[1])
+        # contours = rc_utils.find_contours(image, BLUE[0], BLUE[1])
 
         # Select the largest contour
-        contour = rc_utils.get_largest_contour(contours, MIN_CONTOUR_AREA)
+        # contour = rc_utils.get_largest_contour(contours, MIN_CONTOUR_AREA)
 
+        ### Προσθήκη: εξετάζουμε και τα τρία χρώματα αντί για μόνο το μπλε
+        for color in color_priorities:
+            # Find all the contours corresponding to the current color
+            contours = rc_utils.find_contours(image, color[0], color[1])
+            # Select the largest contour
+            contour = rc_utils.get_largest_contour(contours, MIN_CONTOUR_AREA)
+            # If we find a line of that color, then we're done, otherwise move to the next
+            # color in descending priority
+            if contour is not None: 
+                break
+        ### Προσθήκη
         if contour is not None:
             # Calculate contour information
             contour_center = rc_utils.get_contour_center(contour)
             contour_area = rc_utils.get_contour_area(contour)
+            M = cv.moments(contour)
 
             # Draw contour onto the image
             rc_utils.draw_contour(image, contour)
@@ -95,10 +118,13 @@ def start():
     """
     global speed
     global angle
+    global contour
+    global M
 
     # Initialize variables
     speed = 0
     angle = 0
+    contour = None
 
     # Set initial driving speed and angle
     rc.drive.set_speed_angle(speed, angle)
@@ -134,10 +160,21 @@ def update():
     if contour_center is not None:
         # Current implementation: bang-bang control (very choppy)
         # TODO (warmup): Implement a smoother way to follow the line
-        if contour_center[1] < rc.camera.get_width() / 2:
-            angle = -1
-        else:
-            angle = 1
+        ### Προσθήκη: Καθορισμός γωνίας
+        if contour is not None:
+            (x, y, w, h) = cv.boundingRect(contour) # Το ορθογώνιο με τα όρια του contour
+            # Αν έχουμε κάθετη γραμμή πάμε δεξιά
+            if w > 3 * rc.camera.get_width() / 4:
+                angle = 1
+            else:
+                # Χρήση proportional control αντί για clamping
+                angle = rc_utils.remap_range(contour_center[1], 0, rc.camera.get_width(), -1, 1)
+        ### Τέλος
+
+        # if contour_center[1] < rc.camera.get_width() / 2:
+        #     angle = -1
+        # else:
+        #     angle = 1
 
     # Use the triggers to control the car's speed
     forwardSpeed = rc.controller.get_trigger(rc.controller.Trigger.RIGHT)

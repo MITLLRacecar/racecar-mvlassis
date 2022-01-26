@@ -18,6 +18,10 @@ sys.path.insert(1, "../../library")
 import racecar_core
 import racecar_utils as rc_utils
 
+### Προσθήκη: βιβλιοθήκη για το enumeration του state machine
+from enum import IntEnum
+### Τέλος
+
 ########################################################################################
 # Global variables
 ########################################################################################
@@ -28,6 +32,16 @@ rc = racecar_core.create_racecar()
 # The smallest contour we will recognize as a valid contour
 MIN_CONTOUR_AREA = 30
 
+### Προσθήκη: Σταθερές που χρησιμοποιούμε
+FORWARD_SPEED = 0.4
+BACKWARD_SPEED = 0.4
+BREAK_SPEED = 0.6
+PARK_DOWN_THRESHOLD = 27100
+PARK_UP_THRESHOLD = 27500
+CLOSE_CONTOUR_AREA = 34000
+ALIGN_ANGLE = 0.5
+### Τέλος
+
 # The HSV range for the color orange, stored as (hsv_min, hsv_max)
 ORANGE = ((10, 100, 100), (20, 255, 255))
 
@@ -36,6 +50,25 @@ speed = 0.0  # The current speed of the car
 angle = 0.0  # The current angle of the car's wheels
 contour_center = None  # The (pixel row, pixel column) of contour
 contour_area = 0  # The area of contour
+
+### Προσθήκη: προηγούμενο εμβαδόν του contour για να καταλαβαίνουμε την πραγματική
+### Ταχύτητα του οχήματος
+old_contour_area = 0 # The area of the previous contour
+timer = 0
+### Τέλος
+
+### Προσθήκη: enumeration για το state machine
+class State(IntEnum):
+    straight = 1
+    turn = 2
+    obstacle = 3
+    align = 4
+    forward = 5
+    backward = 6
+    stop = 7
+
+cur_state = State.straight
+### Τέλος 
 
 ########################################################################################
 # Functions
@@ -86,6 +119,15 @@ def start():
     global speed
     global angle
 
+    ### Προσθήκη: Αρχικοποίηση των μεταβλητών που προσθέσαμε
+    global cur_state
+    cur_state = State.straight
+    global timer
+    timer = 0
+    global old_contour_area
+    old_contour_area = 0
+    ### Τέλος
+
     # Initialize variables
     speed = 0
     angle = 0
@@ -107,11 +149,100 @@ def update():
     """
     global speed
     global angle
+    global cur_state
+    global timer
+    global old_contour_area
 
+    old_contour_area = contour_area
     # Search for contours in the current color image
     update_contour()
 
+    
     # TODO: Park the car 30 cm away from the closest orange cone
+    ### Προσθήκη: Κώδικας για όλες τις καταστάσεις του state machine
+
+    if cur_state == State.straight:
+        speed = 1
+        angle = 0
+        cone_identified = contour_center != None
+        #This
+        about_to_hit_something = False
+        if cone_identified and contour_area < PARK_DOWN_THRESHOLD:
+            cur_state = State.forward
+        elif cone_identified and contour_area >= PARK_DOWN_THRESHOLD:
+            cur_state = State.backward
+        elif about_to_hit_something:
+            cur_state = State.obstacle
+        else:
+            timer += rc.get_delta_time()
+            if timer > 3:
+                cur_state = State.turn
+                timer = 0
+
+    elif cur_state == State.turn:
+        speed = 0.2
+        angle = -1
+        timer += rc.get_delta_time()
+        if timer > 3:
+            cur_state = State.straight
+            timer = 0
+
+    elif cur_state == State.obstacle:
+        speed = 1
+        angle = 1
+        # This
+        obstacle_avoided = False # We assume there are no obstacles
+        if obstacle_avoided:
+            cur_state = State.straight
+    # Πρέπει να μετακινηθούμε μπροστά
+    elif cur_state == State.forward:
+        speed = rc_utils.remap_range(contour_area, MIN_CONTOUR_AREA, PARK_DOWN_THRESHOLD, FORWARD_SPEED, 0.05)
+        angle = rc_utils.remap_range(contour_center[1], 0, rc.camera.get_width(), -1, 1)
+        if angle > ALIGN_ANGLE or angle < -ALIGN_ANGLE: # Ευθυγράμμιση αν δεν είμαστε σε σωστή γωνία
+            cur_state = State.align
+        elif contour_area >= PARK_DOWN_THRESHOLD:
+            speed = -BREAK_SPEED
+            angle = 0
+            # Φρενάρισμα μόλις περάσουμε το κάτω όριο
+            if contour_area <= old_contour_area:
+                speed = 0
+                if contour_area <= PARK_UP_THRESHOLD:
+                    cur_state = State.stop
+                else:
+                    cur_state = State.backward
+    # Πρέπει να μετακινηθούμε πίσω
+    elif cur_state == State.backward:
+        speed = rc_utils.remap_range(contour_area, CLOSE_CONTOUR_AREA, PARK_UP_THRESHOLD, -BACKWARD_SPEED, -0.05)
+        angle = 0
+        if contour_area <= PARK_UP_THRESHOLD:
+            speed = BREAK_SPEED
+            angle = 0
+            # Φρενάρισμα μόλις περάσουμε το πάνω όριο
+            if contour_area >= old_contour_area: 
+                speed = 0
+                if contour_area >= PARK_DOWN_THRESHOLD:
+                    cur_state = State.stop
+                else:
+                    cur_state = State.forward
+
+    ### Όταν δεν είμαστε ευθυγραμμισμένοι, όπισθεν μέχρι να ευθρυγραμμιστούμε
+    elif cur_state == State.align:
+        speed = -BACKWARD_SPEED
+        angle = rc_utils.remap_range(contour_center[1], 0, rc.camera.get_width(), 1, -1)
+        if -0.4 < angle < 0.4:
+            cur_state = State.forward
+
+    elif cur_state == State.stop:
+        speed = 0
+        angle = 0
+        if contour_center == None:
+            cur_state = State.straight
+        if contour_area > PARK_UP_THRESHOLD:
+            cur_state = State.backward
+        elif contour_area < PARK_DOWN_THRESHOLD:
+            cur_state = State.forward
+    rc.drive.set_speed_angle(speed, angle)
+    ### Τέλος
 
     # Print the current speed and angle when the A button is held down
     if rc.controller.is_down(rc.controller.Button.A):
@@ -130,6 +261,8 @@ def update_slow():
     After start() is run, this function is run at a constant rate that is slower
     than update().  By default, update_slow() is run once per second
     """
+    print(contour_area)
+    print(cur_state)
     # Print a line of ascii text denoting the contour area and x position
     if rc.camera.get_color_image() is None:
         # If no image is found, print all X's and don't display an image
