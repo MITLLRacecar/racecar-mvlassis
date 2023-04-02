@@ -93,7 +93,7 @@ def update():
     # TODO: Park the car 20 cm away from the closest wall with the car directly facing
     # the wall
     global cur_mode
-    print(cur_mode)
+
     # Measure distance at the left, right, and center of the image
     depth_image = rc.camera.get_depth_image()
     center_dist = rc_utils.get_depth_image_center_distance(depth_image)
@@ -106,7 +106,7 @@ def update():
 
     # Use the difference between left_dist and right_dist to determine angle
     dist_dif = left_dist - right_dist
-    angle = rc_utils.remap_range(dist_dif, -MAX_DIST_DIF, MAX_DIST_DIF, -1, 1, True)
+    angle = rc_utils.remap_range(dist_dif, -MAX_DIST_DIF, MAX_DIST_DIF, ???, ???, True)
 
     # PARK MODE: More forward or backward until center_dist is GOAL_DIST
     if cur_mode == Mode.park:
@@ -120,9 +120,9 @@ def update():
         # If the angle is no longer correct, choose mode based on area
         if abs(angle) > ANGLE_THRESHOLD:
             if center_dist > REVERSE_DIST:
-                cur_mode = Mode.forward
+                cur_mode = Mode.backward
             else:
-                cur_mode = Mode.reverse
+                cur_mode = Mode.forward
 
     # FORWARD MODE: Move forward until we are closer that REVERSE_DIST
     elif cur_mode == Mode.forward:
@@ -139,20 +139,21 @@ def update():
 
     # REVERSE MODE: move backward until we are farther than FORWARD_DIST
     else:
-        speed = rc_utils.remap_range(center_dist, REVERSE_DIST, FORWARD_DIST, -1.0, 0.0)
-        speed = rc_utils.clamp(speed, -ALIGN_SPEED, 0)
+        # Set speed according to distance from center_dist
+        ???
+        ???
 
         # Once we pass FORWARD_DIST, switch to forward mode
-        if center_dist > FORWARD_DIST:
-            cur_mode = Mode.forward
+        ???
+            ???
 
         # If we are close to the correct angle, switch to park mode
-        if abs(angle) < ANGLE_THRESHOLD:
-            cur_mode = Mode.park
+        ???
+            ???
 
     # Reverse the angle if we are driving backward
-    if speed < 0:
-        angle *= -1
+    ???
+        ???
 
     rc.drive.set_speed_angle(speed, angle)
 
@@ -186,3 +187,4 @@ def update():
 if __name__ == "__main__":
     rc.set_start_update(start, update, None)
     rc.go()
+

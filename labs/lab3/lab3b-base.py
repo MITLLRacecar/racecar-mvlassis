@@ -37,7 +37,7 @@ class Mode(enum.IntEnum):
 MIN_CONTOUR_AREA = 30
 
 # Distance (in cm) we will park away from the cone
-GOAL_DISTANCE = 30.5
+GOAL_DISTANCE = 30
 
 # Distance (in cm) at which we switch from reverse to forward mode
 FORWARD_DISTANCE = 120
@@ -127,12 +127,9 @@ def update():
     global speed
     global angle
     global cur_mode
+
     # Search for contours in the current color image
     update_contour()
-
-    # TODO: Park the car 30 cm away from the closest orange cone.
-    # Use both color and depth information to handle cones of multiple sizes.
-    # You may wish to copy some of your code from lab2b.py
 
     # Find the distance of the cone contour
     if contour_center is not None:
@@ -143,6 +140,7 @@ def update():
     if contour_center is None or distance == 0.0:
         speed = 0
         angle = 0
+
     else:
         # Use proportional control to set wheel angle based on contour x position
         angle = rc_utils.remap_range(contour_center[1], 0, rc.camera.get_width(), -1, 1)
@@ -162,7 +160,7 @@ def update():
             if abs(angle) > ANGLE_THRESHOLD:
                 cur_mode = Mode.forward if distance > FORWARD_DISTANCE else Mode.reverse
 
-        # FORWARD MODE: Move forward until we are closer than REVERSE_DISTANCE
+        # FORWARD MODE: Move forward until we are closer that REVERSE_DISTANCE
         elif cur_mode == Mode.forward:
             speed = rc_utils.remap_range(
                 distance, FORWARD_DISTANCE, REVERSE_DISTANCE, 1.0, 0.0
@@ -197,6 +195,21 @@ def update():
             angle *= -1
 
     rc.drive.set_speed_angle(speed, angle)
+
+    # Print the current speed and angle when the A button is held down
+    if rc.controller.is_down(rc.controller.Button.A):
+        print("Speed:", speed, "Angle:", angle)
+
+    # Print the center and distance of the largest contour when B is held down
+    if rc.controller.is_down(rc.controller.Button.B):
+        if contour_center is None:
+            print("No contour found")
+        else:
+            print("Center:", contour_center, "Distance:", distance)
+
+    # Print the current mode when the X button is held down
+    if rc.controller.is_down(rc.controller.Button.X):
+        print("Mode:", cur_mode)
 
 
 ########################################################################################

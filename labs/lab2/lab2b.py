@@ -39,7 +39,7 @@ BREAK_SPEED = 0.6
 PARK_DOWN_THRESHOLD = 27100
 PARK_UP_THRESHOLD = 27500
 CLOSE_CONTOUR_AREA = 34000
-ALIGN_ANGLE = 0.5
+ALIGN_ANGLE = 0.4
 ### Τέλος
 
 # The HSV range for the color orange, stored as (hsv_min, hsv_max)

@@ -53,14 +53,14 @@ def start():
     """
     This function is run once every time the start button is pressed
     """
-    global cur_speed
-    global prev_distance
+    ???
+    ???
 
     # Have the car begin at a stop
     rc.drive.stop()
 
     # Initialize variables
-    cur_speed = 0
+    ???
     depth_image = rc.camera.get_depth_image()
     prev_distance = rc_utils.get_depth_image_center_distance(depth_image)
 
@@ -83,8 +83,8 @@ def update():
     After start() is run, this function is run every frame until the back button
     is pressed
     """
-    global cur_speed
-    global prev_distance
+    ???
+    ???
     # Use the triggers to control the car's speed
     rt = rc.controller.get_trigger(rc.controller.Trigger.RIGHT)
     lt = rc.controller.get_trigger(rc.controller.Trigger.LEFT)
@@ -100,9 +100,9 @@ def update():
     distance = rc_utils.get_pixel_average_distance(depth_image_cropped, closest_point)
 
     # Update forward speed estimate
-    frame_speed = (prev_distance - distance) / rc.get_delta_time()
+    frame_speed = ???
     cur_speed += ALPHA * (frame_speed - cur_speed)
-    prev_distance = distance
+    ???
 
     # Calculate slow and stop distances based on the forward speed
     stop_distance = rc_utils.clamp(
@@ -114,10 +114,10 @@ def update():
 
     # TODO (warmup): Prevent forward movement if the car is about to hit something.
     # Allow the user to override safety stop by holding the right bumper.
-    if not rc.controller.is_down(rc.controller.Button.RB) and cur_speed > 0:
+    if ??? and cur_speed > 0:
         if stop_distance < distance < slow_distance:
             speed = min(speed, rc_utils.remap_range(distance, stop_distance, slow_distance, 0, 0.5))
-        elif 0 < distance < stop_distance:
+        elif distance < stop_distance:
             speed = rc_utils.remap_range(distance, 0, stop_distance, -4, -0.2, True)
             speed = rc_utils.clamp(speed, -1, -0.2)
 

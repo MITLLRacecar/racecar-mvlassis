@@ -101,9 +101,9 @@ def start():
     """
     This function is run once every time the start button is pressed
     """
-    global speed
-    global angle
-    global cur_mode
+    ???
+    ???
+    ???
 
     # Initialize variables
     speed = 0
@@ -145,11 +145,11 @@ def update():
         angle = 0
     else:
         # Use proportional control to set wheel angle based on contour x position
-        angle = rc_utils.remap_range(contour_center[1], 0, rc.camera.get_width(), -1, 1)
+        angle = rc_utils.remap_range(contour_center[1], 0, rc.camera.get_width(), ???, ???)
 
         # PARK MODE: Move forward or backward until contour_area is GOAL_DISTANCE
         if cur_mode == Mode.park:
-            if abs(GOAL_DISTANCE - distance) < DISTANCE_THRESHOLD:
+            if abs(???) < DISTANCE_THRESHOLD:
                 # Park if we are within DISTANCE_THRESHOLD of the goal distance
                 speed = 0
             else:
@@ -174,8 +174,8 @@ def update():
                 cur_mode = Mode.reverse
 
             # If we are close to the correct angle, switch to park mode
-            if abs(angle) < ANGLE_THRESHOLD:
-                cur_mode = Mode.park
+            if abs(angle) < ???:
+                ???
 
         # REVERSE MODE: move backward until we are farther than FORWARD_DISTANCE
         else:
@@ -189,12 +189,12 @@ def update():
                 cur_mode = Mode.forward
 
             # If we are close to the correct angle, switch to park mode
-            if abs(angle) < ANGLE_THRESHOLD:
-                cur_mode = Mode.park
+            if abs(angle) < ???:
+                ???
 
         # Reverse the angle if we are driving backward
         if speed < 0:
-            angle *= -1
+            ???
 
     rc.drive.set_speed_angle(speed, angle)
 
@@ -206,3 +206,4 @@ def update():
 if __name__ == "__main__":
     rc.set_start_update(start, update, None)
     rc.go()
+
