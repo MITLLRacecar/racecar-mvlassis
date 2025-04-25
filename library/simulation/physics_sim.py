@@ -1,9 +1,9 @@
-import sys
 import struct
 import numpy as np
 from nptyping import NDArray
 
 from physics import Physics
+
 
 class PhysicsSim(Physics):
     def __init__(self, racecar) -> None:

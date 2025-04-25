@@ -1,9 +1,12 @@
 """
-Copyright Harvey Mudd College
+Copyright MIT
 MIT License
-Spring 2020
 
-Contains the Drive module of the racecar_core library
+BWSI Autonomous RACECAR Course
+Racecar Neo LTS
+
+File Name: drive_real.py
+File Description: Contains the Drive module of the racecar_core library
 """
 
 from drive import Drive
@@ -47,18 +50,10 @@ class DriveReal(Drive):
             -1.0 <= angle <= 1.0
         ), f"angle [{angle}] must be between -1.0 and 1.0 inclusive."
 
-        self.__message.drive.speed = rc_utils.remap_range(
-            speed * self.__max_speed,
-            -1.0,
-            1.0,
-            self.__PWM_SPEED_MIN,
-            self.__PWM_SPEED_MAX,
-        )
+        self.__message.drive.speed = speed * self.__max_speed
 
         angle = -angle
-        self.__message.drive.steering_angle = rc_utils.remap_range(
-            angle, -1.0, 1.0, self.__PWM_TURN_LEFT, self.__PWM_TURN_RIGHT,
-        )
+        self.__message.drive.steering_angle = float(angle)
 
     def set_max_speed(self, max_speed: float = 0.25) -> None:
         assert (

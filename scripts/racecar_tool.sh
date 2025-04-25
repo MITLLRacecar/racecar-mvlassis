@@ -1,12 +1,14 @@
 #!/bin/sh
 # Creates the racecar tool for easily using and communicating with a RACECAR
 
+RACECAR_ABSOULTE_PATH="${HOME}/Github/racecar-mvlassis/labs2025/"
+
 racecar() {
   if [ "$RACECAR_CONFIG_LOADED" != "TRUE" ]; then
     echo "Error: unable to find your local .config file.  Please make sure that you setup the racecar tool correctly."
     echo "Go to \"https://mitll-racecar-mn.readthedocs.io/en/latest/gettingStarted/computerSetup.html\" for setup instructions."
   else
-    local RACECAR_DESTINATION_PATH="/home/racecar/Documents/${RACECAR_TEAM}"
+    local RACECAR_DESTINATION_PATH="/home/racecar/jupyter_ws/${RACECAR_TEAM}"
     if [ $# -eq 1 ] && [ "$1" = "cd" ]; then
       cd "$RACECAR_ABSOLUTE_PATH"/labs || return
     elif [ $# -eq 1 ] && [ "$1" = "connect" ]; then
@@ -18,23 +20,45 @@ racecar() {
       jupyter-notebook --no-browser
     elif [ $# -eq 1 ] && [ "$1" = "remove" ]; then
       echo "Removing your team directory from your RACECAR..."
-      ssh racecar@"$RACECAR_IP" "cd /home/racecar/Documents/ && rm -rf ${RACECAR_TEAM}"
+      ssh racecar@"$RACECAR_IP" "cd /home/racecar/jupyter_ws/ && rm -rf ${RACECAR_TEAM}"
     elif [ $# -eq 1 ] && [ "$1" = "setup" ]; then
       echo "Creating your team directory (${RACECAR_DESTINATION_PATH}) on your RACECAR..."
       ssh racecar@"$RACECAR_IP" mkdir -p "$RACECAR_DESTINATION_PATH"
       racecar sync all
     elif [ $# -ge 2 ] && [ "$1" = "sim" ]; then
       python3 "$2" -s "$3" "$4" "$5" "$6"
+    elif [ $# -eq 1 ] && [ "$1" = "backup" ]; then
+      cd "$RACECAR_ABSOLUTE_PATH"
+      now="$(date)"
+      if [ ! -d "backup" ]
+      then
+        echo "Backup folder not found, creating one now..."
+        mkdir ./backup
+        echo "Backup folder created, continuing..."
+      else
+        echo "Backup folder found, continuing..."
+      fi
+      shopt -s nullglob
+      numfiles=(./backup/*)
+      numfiles=${#numfiles[@]}
+      mkdir ./backup/version_"$numfiles"
+      echo "Current date: $now" > ./backup/version_"$numfiles"/info.txt
+      echo "Racecar ip: $RACECAR_IP" >> ./backup/version_"$numfiles"/info.txt
+      echo "Racecar team: $RACECAR_TEAM" >> ./backup/version_"$numfiles"/info.txt
+      echo "Backup number: $numfiles"
+      echo "Backup location: $RACECAR_ABSOLUTE_PATH"/backup/version_"$numfiles"
+      echo "Downloading files now..."
+      scp -rp racecar@$RACECAR_IP:/home/racecar/jupyter_ws $RACECAR_ABSOLUTE_PATH/backup/version_$numfiles
     elif [ $# -eq 2 ] && [ "$1" = "sync" ]; then
       local valid_command=false
       if [ "$2" = "library" ] || [ "$2" = "all" ]; then
         echo "Copying your local copy of the RACECAR library to your car (${RACECAR_IP})..."
-        scp -rp "$RACECAR_ABSOLUTE_PATH"/library racecar@"$RACECAR_IP":"$RACECAR_DESTINATION_PATH"
+        rsync -azP --delete "$RACECAR_ABSOLUTE_PATH"/library racecar@"$RACECAR_IP":"$RACECAR_DESTINATION_PATH"
         valid_command=true
       fi
       if [ "$2" = "labs" ] || [ "$2" = "all" ]; then
         echo "Copying your local copy of the RACECAR labs to your car (${RACECAR_IP})..."
-        scp -rp "$RACECAR_ABSOLUTE_PATH"/labs racecar@"$RACECAR_IP":"$RACECAR_DESTINATION_PATH"
+        rsync -azP --delete "$RACECAR_ABSOLUTE_PATH"/labs racecar@"$RACECAR_IP":"$RACECAR_DESTINATION_PATH"
         valid_command=true
       fi
       if [ "$valid_command" = false ]; then
@@ -66,6 +90,7 @@ racecar() {
       echo "  racecar sync library: copies your local RACECAR library folder to your car with scp."
       echo "  racecar sync labs: copies your local RACECAR labs folder to your car with scp."
       echo "  racecar sync all: copies all local RACECAR files to you car with scp."
+      echo "  racecar backup: Creates a backup of the physical RACECAR code on a local computer."
       echo "  racecar test: prints a message to check if the RACECAR tool was set up successfully."
     fi
   fi

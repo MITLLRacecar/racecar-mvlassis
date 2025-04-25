@@ -1,9 +1,12 @@
 """
-Copyright MIT and Harvey Mudd College
+Copyright MIT
 MIT License
-Summer 2020
 
-Defines the interface for the Lidar module of the racecar_core library.
+BWSI Autonomous RACECAR Course
+Racecar Neo LTS
+
+File Name: lidar.py
+File Description: Defines the interface for the Lidar module of the racecar_core library.
 """
 
 import abc
@@ -29,7 +32,7 @@ class Lidar(abc.ABC):
 
         Note:
             Samples are in clockwise order, with the 0th sample directly in front of the
-            car.  Each sample is an equal angle appart.
+            car.  Each sample is an equal angle apart.
 
         Example::
 
@@ -51,7 +54,7 @@ class Lidar(abc.ABC):
 
         Note:
             Samples are in clockwise order, with the 0th sample directly in front of the
-            car.  Each sample is an equal angle appart.
+            car.  Each sample is an equal angle apart.
 
         Warning:
             This function breaks the start-update paradigm and should only be used in

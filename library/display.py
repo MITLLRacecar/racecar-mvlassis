@@ -1,15 +1,18 @@
 """
-Copyright MIT and Harvey Mudd College
+Copyright MIT
 MIT License
-Summer 2020
 
-Defines the interface of the Display module of the racecar_core library.
+BWSI Autonomous RACECAR Course
+Racecar Neo LTS
+
+File Name: display.py
+File Description: Defines the interface of the Display module of the racecar_core library.
 """
 
 import abc
 import numpy as np
 import math
-from typing import List, Tuple, Any
+from typing import Any
 from nptyping import NDArray
 
 import racecar_utils as rc_utils
@@ -55,7 +58,7 @@ class Display(abc.ABC):
         Displays a color image in a window.
 
         Args:
-            image: The color image to display to the the screen.
+            image: The color image to display to the screen.
 
         Example::
 
@@ -70,7 +73,7 @@ class Display(abc.ABC):
         self,
         image: NDArray[(Any, Any), np.float32],
         max_depth: int = 1000,
-        points: List[Tuple[int, int]] = [],
+        points: list[tuple[int, int]] = [],
     ) -> None:
         """
         Displays a depth image in grayscale in a window.
@@ -126,7 +129,7 @@ class Display(abc.ABC):
         samples: NDArray[Any, np.float32],
         radius: int = 128,
         max_range: int = 1000,
-        highlighted_samples: List[Tuple[float, float]] = [],
+        highlighted_samples: list[tuple[float, float]] = [],
     ) -> None:
         """
         Displays a set of LIDAR samples.
@@ -147,7 +150,7 @@ class Display(abc.ABC):
 
         Warning:
             samples must be a complete LIDAR scan.  This function assumes that each
-            sample is equal angle appart, and that samples spans the entire 360 degrees.
+            sample is equal angle apart, and that samples spans the entire 360 degrees.
             If this is not the case, the visualization will be inaccurate.
 
         Example::
@@ -200,3 +203,89 @@ class Display(abc.ABC):
                 image[r][c][2] = 0
 
         self.show_color_image(image)
+
+    @abc.abstractmethod
+    def set_matrix(self, matrix: NDArray[(8, 24), np.uint8]) -> None:
+        """
+        Sets the dot matrix display module to the pattern in the argument (2D matrix).
+
+        Args:
+            matrix: The 8x24 NumPy array with the pattern to be displayed on the dot
+                matrix display module.
+
+        Note:
+            A 1 in the matrix indicates an LED that is on, while a 0 in the
+            matrix indicates an LED that is off.
+
+        Example::
+
+            dot_matrix = np.ones((8, 24), dtype=np.uint8)
+
+            # Turn all the LEDs on the dot matrix module on
+            rc.display.set_matrix(dot_matrix)
+
+        """
+        pass
+
+    @abc.abstractmethod
+    def get_matrix(self) -> NDArray[(8, 24), np.uint8]:
+        """
+        Returns the current configuration of the dot matrix display module.
+
+        Returns:
+            An 8x24 NumPy array (data type: np.uint8) representing the current
+            configuration of the dot matrix display module.
+
+        Note:
+            A 1 in the matrix indicates an LED that is on, while a 0 in the
+            matrix indicates an LED that is off.
+
+        Example::
+
+            # Gets current configuration values of the dot matrix module
+            dot_matrix = rc.display.get_matrix()
+        """
+        pass
+
+    def new_matrix(self) -> NDArray[(8, 24), np.uint8]:
+        """
+        Returns a new matrix of all zeroes for the dot matrix display module.
+
+        Returns:
+            An 8x24 NumPy array (data type: np.uint8) of all zeroes.
+
+        Example::
+
+            # Create a new matrix of all zeroes.
+            my_matrix = rc.display.new_matrix()
+
+            # Set the top left pixel to on, then display the matrix on the dot matrix.
+            my_matrix[0, 0] = 1
+            rc.display.set_matrix(my_matrix)
+        """
+        return np.zeros((8, 24), dtype=np.uint8)
+
+    @abc.abstractmethod
+    def set_matrix_intensity(self, intensity: float) -> None:
+        """
+        Sets the intensity of the dot matrix display module.
+
+        Args:
+            intensity: The LED intensity (between 0.0 and 1.0) to set.
+
+        Note:
+            Due to the way the racecar's LED driver works, an intensity of 0.0 does *not*
+            correspond to turning the LEDs completely off, and therefore `set_matrix_intensity`
+            cannot be used to make a fade-in or fade-out animation.
+
+        Example::
+
+            # Pulse the dot matrix display using a sin wave profile.
+            def update():
+                global time
+                time += rc.get_delta_time()
+
+                intensity = rc_utils.remap_range(math.sin(time), -1.0, 1.0, 0.0, 1.0)
+                rc.display.set_matrix_intensity(intensity)
+        """
+        pass

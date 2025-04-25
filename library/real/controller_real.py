@@ -1,16 +1,18 @@
 """
-Copyright Harvey Mudd College
+Copyright MIT
 MIT License
-Spring 2020
 
-Contains the Controller module of the racecar_core library
+BWSI Autonomous RACECAR Course
+Racecar Neo LTS
+
+File Name: controller_real.py
+File Description: Contains the Controller module of the racecar_core library
 """
 
 from controller import Controller
 
 # General
 import copy
-from typing import Tuple
 
 # ROS2
 import rclpy as ros2
@@ -99,7 +101,7 @@ class ControllerReal(Controller):
     def get_trigger(self, trigger: Controller.Trigger) -> float:
         return self.__last_trigger[trigger.value]
 
-    def get_joystick(self, joystick: Controller.Joystick) -> Tuple[float, float]:
+    def get_joystick(self, joystick: Controller.Joystick) -> tuple[float, float]:
         return self.__last_joystick[joystick.value]
 
     def __controller_callback(self, message):
@@ -163,13 +165,13 @@ class ControllerReal(Controller):
             return 0
         return value
 
-    def __convert_joystick_values(self, x: float, y: float) -> Tuple[float, float]:
+    def __convert_joystick_values(self, x: float, y: float) -> tuple[float, float]:
         """
         Converts a received joystick axis value into the desired range.
 
         Args:
-            x: The value of the joystick x axis provided in the ROS message.
-            y: The value of the joystick y axis provided in the ROS message.
+            x: The value of the joystick x-axis provided in the ROS message.
+            y: The value of the joystick y-axis provided in the ROS message.
         """
         x = -x
 
@@ -178,4 +180,4 @@ class ControllerReal(Controller):
         if abs(y) < self.__JOYSTICK_DEAD_ZONE:
             y = 0
 
-        return (x, y)
+        return x, y

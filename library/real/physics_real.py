@@ -1,9 +1,12 @@
 """
-Copyright Harvey Mudd College
+Copyright MIT
 MIT License
-Spring 2020
 
-Contains the Physics module of the racecar_core library
+BWSI Autonomous RACECAR Course
+Racecar Neo LTS
+
+File Name: physics_real.py
+File Description: Contains the Physics module of the racecar_core library
 """
 
 from physics import Physics
@@ -26,8 +29,7 @@ from sensor_msgs.msg import Imu
 
 class PhysicsReal(Physics):
     # The ROS topic from which we read imu data
-    __ACCEL_TOPIC = "/camera/accel"
-    __GYRO_TOPIC = "/camera/gyro"
+    __IMU_TOPIC = "/imu"
 
     # Limit on buffer size to prevent memory overflow
     __BUFFER_CAP = 60
@@ -36,21 +38,14 @@ class PhysicsReal(Physics):
         self.node = ros2.create_node("imu_sub")
 
         qos_profile = QoSProfile(depth=1)
-        qos_profile.history = QoSHistoryPolicy.RMW_QOS_POLICY_HISTORY_KEEP_LAST
-        qos_profile.reliability = (
-            QoSReliabilityPolicy.RMW_QOS_POLICY_RELIABILITY_BEST_EFFORT
-        )
-        qos_profile.durability = QoSDurabilityPolicy.RMW_QOS_POLICY_DURABILITY_VOLATILE
+        qos_profile.history = QoSHistoryPolicy.KEEP_LAST
+        qos_profile.reliability = QoSReliabilityPolicy.BEST_EFFORT
+        qos_profile.durability = QoSDurabilityPolicy.VOLATILE
 
         # subscribe to the accel topic, which will call
         # __accel_callback every time the camera publishes data
-        self.__accel_sub = self.node.create_subscription(
-            Imu, self.__ACCEL_TOPIC, self.__accel_callback, qos_profile
-        )
-        # subscribe to the gyro topic, which will call
-        # __gyro_callback every time the camera publishes data
-        self.__gyro_sub = self.node.create_subscription(
-            Imu, self.__GYRO_TOPIC, self.__gyro_callback, qos_profile
+        self.__imu_sub = self.node.create_subscription(
+            Imu, self.__IMU_TOPIC, self.__imu_callback, qos_profile
         )
 
         self.__acceleration = np.array([0, 0, 0])
@@ -58,20 +53,15 @@ class PhysicsReal(Physics):
         self.__angular_velocity = np.array([0, 0, 0])
         self.__angular_velocity_buffer = deque()
 
-    def __accel_callback(self, data):
+    def __imu_callback(self, data):
         new_acceleration = np.array(
-            [
-                data.linear_acceleration.x,
-                data.linear_acceleration.y,
-                data.linear_acceleration.z,
-            ]
+            [data.linear_acceleration.x, data.linear_acceleration.y, data.linear_acceleration.z]
         )
 
         self.__acceleration_buffer.append(new_acceleration)
         if len(self.__acceleration_buffer) > self.__BUFFER_CAP:
             self.__acceleration_buffer.popleft()
 
-    def __gyro_callback(self, data):
         new_angular_velocity = np.array(
             [data.angular_velocity.x, data.angular_velocity.y, data.angular_velocity.z]
         )

@@ -1,9 +1,12 @@
 """
-Copyright Harvey Mudd College
+Copyright MIT
 MIT License
-Spring 2020
 
-Contains the Lidar module of the racecar_core library
+BWSI Autonomous RACECAR Course
+Racecar Neo LTS
+
+File Name: lidar_real.py
+File Description: Contains the Lidar module of the racecar_core library
 """
 
 from lidar import Lidar
@@ -16,8 +19,6 @@ from nptyping import NDArray
 import rclpy as ros2
 from rclpy.qos import qos_profile_sensor_data
 from sensor_msgs.msg import LaserScan
-from cv_bridge import CvBridge, CvBridgeError
-import threading
 
 
 class LidarReal(Lidar):
@@ -37,8 +38,12 @@ class LidarReal(Lidar):
         self.__samples = np.empty(0)
         self.__samples_new = np.empty(0)
 
+    # LIDAR Scan returns value in meters, multiplying by 100 to be processed in cm
+    # LIDAR Scan reversed, flipping order of data entry to correct for CW spin - matches with sim
+    # For RPLidar - replace "inf" with 0 to match sim LIDAR data
     def __scan_callback(self, data):
-        self.__samples_new = np.array(data.ranges)
+        scan_data = np.flip(np.multiply(np.array(data.ranges), 100))
+        self.__samples_new = np.array([0 if str(x) == "inf" else x for x in scan_data])
 
     def __update(self):
         self.__samples = self.__samples_new

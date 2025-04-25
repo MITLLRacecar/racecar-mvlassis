@@ -1,9 +1,12 @@
 """
-Copyright MIT and Harvey Mudd College
+Copyright MIT
 MIT License
-Summer 2020
 
-Defines the interface of the Camera module of the racecar_core library.
+BWSI Autonomous RACECAR Course
+Racecar Neo LTS
+
+File Name: camera.py
+File Description: Defines the interface of the Camera module of the racecar_core library.
 """
 
 import abc
@@ -78,7 +81,7 @@ class Camera(abc.ABC):
 
             # Initialize image with a direct reference to the recent color image
             # captured by the camera
-            image = rc.camera.get_color_image()
+            image = rc.camera.get_color_image_no_copy()
 
             # Store the amount of blue in the pixel on row 3, column 5
             blue = image[3][5][0]
@@ -127,7 +130,7 @@ class Camera(abc.ABC):
         Returns the current depth image captured by the camera.
 
         Returns:
-            A two dimensional array indexed from top left to the bottom right storing
+            A two-dimensional array indexed from top left to the bottom right storing
             the distance of each pixel from the car in cm.
 
         Example::
@@ -146,7 +149,7 @@ class Camera(abc.ABC):
         Returns the current depth image without the car in "go" mode.
 
         Returns:
-            A two dimensional array indexed from top left to the bottom right storing
+            A two-dimensional array indexed from top left to the bottom right storing
             the distance of each pixel from the car in cm.
 
         Warning:

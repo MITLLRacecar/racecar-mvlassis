@@ -1,14 +1,16 @@
 """
-Copyright MIT and Harvey Mudd College
+Copyright MIT
 MIT License
-Summer 2020
 
-Defines the interface of the Controller module of the racecar_core library.
+BWSI Autonomous RACECAR Course
+Racecar Neo LTS
+
+File Name: controller.py
+File Description: Defines the interface of the Controller module of the racecar_core library.
 """
 
 import abc
 from enum import IntEnum
-from typing import Tuple
 
 
 class Controller(abc.ABC):
@@ -117,7 +119,7 @@ class Controller(abc.ABC):
             # This update function will print a single message each time the A
             # button is released on the controller
             def update():
-                if rc.controller.was_pressed(rc.controller.Button.A):
+                if rc.controller.was_released(rc.controller.Button.A):
                     print("The A button was released")
         """
         pass
@@ -146,7 +148,7 @@ class Controller(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def get_joystick(self, joystick: Joystick) -> Tuple[float, float]:
+    def get_joystick(self, joystick: Joystick) -> tuple[float, float]:
         """
         Returns the position of a certain joystick as an (x, y) tuple.
 

@@ -1,9 +1,12 @@
 """
-Copyright MIT and Harvey Mudd College
+Copyright MIT
 MIT License
-Summer 2020
 
-Defines the interface of the Drive module of the racecar_core library.
+BWSI Autonomous RACECAR Course
+Racecar Neo LTS
+
+File Name: drive.py
+File Description: Defines the interface of the Drive module of the racecar_core library.
 """
 
 import abc
@@ -11,7 +14,7 @@ import abc
 
 class Drive(abc.ABC):
     @abc.abstractmethod
-    def set_speed_angle(self, speed: float, angle:float) -> None:
+    def set_speed_angle(self, speed: float, angle: float) -> None:
         """
         Sets the throttle applied to the back wheels and the angle of the front wheels.
 
@@ -64,7 +67,7 @@ class Drive(abc.ABC):
 
         Warning:
             The RACECAR contains expensive and fragile equipment.  Please only increase
-            The max speed if you are in a safe environment without the potential for
+            the max speed if you are in a safe environment without the potential for
             hard collisions.
 
         Example::
